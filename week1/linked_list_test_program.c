@@ -1,20 +1,49 @@
+#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "linked_list.h"
 
 #define TEST(x) printf("Running test " #x "\n"); fflush(stdout);
-#define SUBTEST(x) printf("    Executing subtest " #x "\n"); fflush(stdout);
+#define SUBTEST(x) printf("    Executing subtest " #x "\n"); fflush(stdout); \
+                   alarm(1);
 #define FAIL(cond, msg) if (cond) {\
                         printf("    FAIL! "); \
                         printf(#msg "\n"); \
                         exit(-1);\
                         }
-#define PASS(x) printf("PASS!\n");
+#define PASS(x) printf("PASS!\n"); alarm(0);
 
 bool instrumented_malloc_fail_next             = false;
 bool instrumented_malloc_last_alloc_successful = false;
+
+void gracefully_exit_on_suspected_infinite_loop(int signal_number) {
+    // Use write() to tell the tester that they're probably stuck
+    // in an infinite loop.
+    //
+    // Why not printf()/fprintf()? It goes against POSIX rules for
+    // signal handlers to call a non-reentrant function, of which both
+    // of those are. I had no about that constraint prior to writing
+    // this function. Cool!
+    //
+    const char* err_msg = "        Likely stuck in infinite loop! Exiting.\n";
+    ssize_t retval      = write(STDOUT_FILENO, err_msg, strlen(err_msg));
+    fflush(stdout);
+
+    // We really don't care about whether write() succeeded or failed
+    // or whether a partial write occurred. Further, we only install
+    // this function to one signal handler, so we can ignore that as well.
+    //
+    (void)retval;
+    (void)signal_number;
+
+    // Exit.
+    //
+    exit(1);
+}
 
 void * instrumented_malloc(size_t size) {
     if (instrumented_malloc_fail_next) {
@@ -78,6 +107,7 @@ void check_insertion_functionality(void) {
     // data.
     //
     struct linked_list * ll = linked_list_create();
+    size_t ll_size          = SIZE_MAX;
     FAIL(ll == NULL,
          "Failed to create new linked_list (#1)")
     for (size_t i = 1; i <= 4; i++) {
@@ -108,7 +138,10 @@ void check_insertion_functionality(void) {
     // Inserts 4, 3, 2, 1 into the list, verifies data.
     //
     SUBTEST(insert_front)
-    ll = linked_list_create();
+    ll      = linked_list_create();
+    ll_size = linked_list_size(ll);
+    FAIL(ll_size != 0,
+         "linked_list (#2) size is non-zero when created") 
     FAIL(ll == NULL,
          "Failed to create new linked_list (#2)")
     for (size_t i = 4; i != 0; i--) {
@@ -116,7 +149,10 @@ void check_insertion_functionality(void) {
 	FAIL(status == false,
              "Failed to insert node into linked_list #2")
     }
-
+    ll_size = linked_list_size(ll);
+    FAIL(ll_size != 4,
+         "linked_list (#2) size was not equal to 4")
+    
     SUBTEST(iterate_over_linked_list_2)
     iter = linked_list_create_iterator(ll, 0);
     for (size_t i = 1; i <= 4; i++) {
@@ -129,6 +165,9 @@ void check_insertion_functionality(void) {
 	//
 	linked_list_iterate(iter);
     }
+    ll_size = linked_list_size(ll);
+    FAIL(ll_size != 4,
+         "linked_list (#2) size was not equal to 4")
     linked_list_delete(ll);
     linked_list_delete_iterator(iter);
 
@@ -136,7 +175,11 @@ void check_insertion_functionality(void) {
 }
 
 int main(void) {
-    // Setup
+    // Set up signal handler for catching infinite loops.
+    //
+    signal(SIGALRM, gracefully_exit_on_suspected_infinite_loop);
+
+    // Setup instrumented memory allocation/deallocation.
     //
     linked_list_register_malloc(&instrumented_malloc);
     linked_list_register_free(&free);
