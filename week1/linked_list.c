@@ -70,3 +70,84 @@ size_t linked_list_size(struct linked_list * ll) {
 
     return count;
 }
+
+
+bool linked_list_insert_end(struct linked_list * ll, unsigned int data) {
+
+    struct node *node_to_insert = malloc_fptr(sizeof(struct node));
+
+    if (node_to_insert == NULL) {
+        return false;
+    }
+    node_to_insert->data = data;
+    node_to_insert->next = NULL;
+
+    struct node *current_node = ll->head;
+
+    if (current_node == NULL) {
+        ll->head = node_to_insert;
+
+        return true;
+    }
+
+    while (current_node->next != NULL) {
+        current_node = current_node->next;
+    }
+
+    current_node->next = node_to_insert;
+
+    return true;
+}
+
+bool linked_list_insert_front(struct linked_list * ll, unsigned int data) {
+
+    struct node *node_to_insert = malloc_fptr(sizeof(struct node));
+
+    if (node_to_insert == NULL) {
+        return false;
+    }
+    node_to_insert->data = data;
+    node_to_insert->next = NULL;
+
+    struct node *current_node = ll->head;
+
+    if (current_node == NULL) {
+        ll->head = node_to_insert;
+    } else {
+        node_to_insert->next = current_node;
+        ll->head = node_to_insert;
+    }
+
+    return true;
+
+}
+
+bool linked_list_insert(struct linked_list * ll, size_t index, unsigned int data) {
+
+    if (index == 0) {
+        return linked_list_insert_front(ll, data);
+    }
+
+    struct node *node_to_insert = malloc_fptr(sizeof(struct node));
+
+    if (node_to_insert == NULL) {
+        return false;
+    }
+    node_to_insert->data = data;
+    node_to_insert->next = NULL;
+
+    struct node *prev_node = ll->head;
+    struct node *next_node = prev_node;
+    size_t count = 0;
+
+    while (count != index) {
+        next_node = next_node->next;
+        prev_node = next_node;
+        count += 1;
+    }
+
+    prev_node->next = node_to_insert;
+    node_to_insert->next = next_node;
+
+    return true;
+}
