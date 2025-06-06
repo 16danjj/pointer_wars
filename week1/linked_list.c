@@ -72,9 +72,9 @@ size_t linked_list_size(struct linked_list * ll) {
 
 bool linked_list_insert_end(struct linked_list * ll, unsigned int data) {
 
-    struct node *node_to_insert = malloc_fptr(sizeof(struct node));
+    struct node *node_to_insert = (struct node *)malloc_fptr(sizeof(struct node));
 
-    if (node_to_insert == NULL) {
+    if (node_to_insert == NULL || ll == NULL) {
         return false;
     }
     node_to_insert->data = data;
@@ -99,9 +99,9 @@ bool linked_list_insert_end(struct linked_list * ll, unsigned int data) {
 
 bool linked_list_insert_front(struct linked_list * ll, unsigned int data) {
 
-    struct node *node_to_insert = malloc_fptr(sizeof(struct node));
+    struct node *node_to_insert = (struct node *)malloc_fptr(sizeof(struct node));
 
-    if (node_to_insert == NULL) {
+    if (node_to_insert == NULL || ll == NULL) {
         return false;
     }
     node_to_insert->data = data;
@@ -126,9 +126,9 @@ bool linked_list_insert(struct linked_list * ll, size_t index, unsigned int data
         return linked_list_insert_front(ll, data);
     }
 
-    struct node *node_to_insert = malloc_fptr(sizeof(struct node));
+    struct node *node_to_insert = (struct node *)malloc_fptr(sizeof(struct node));
 
-    if (node_to_insert == NULL) {
+    if (node_to_insert == NULL || ll == NULL) {
         return false;
     }
     node_to_insert->data = data;
@@ -152,6 +152,10 @@ bool linked_list_insert(struct linked_list * ll, size_t index, unsigned int data
 
 size_t linked_list_find(struct linked_list * ll, unsigned int data) {
 
+    if (ll == NULL) {
+        return SIZE_MAX;
+    }
+
     struct node *current_node = ll->head;
     size_t index = 0;
 
@@ -173,6 +177,10 @@ size_t linked_list_find(struct linked_list * ll, unsigned int data) {
 }
 
 bool linked_list_remove(struct linked_list * ll, size_t index) {
+
+    if (ll == NULL) {
+        return false;
+    }
 
     struct node *current_node = ll->head;
     struct node *prev_node = ll->head;
@@ -202,13 +210,14 @@ bool linked_list_remove(struct linked_list * ll, size_t index) {
 
 struct iterator * linked_list_create_iterator(struct linked_list * ll, size_t index) {
 
-    struct iterator *it = malloc_fptr(sizeof(struct iterator));
-    size_t count = 0;
-    struct node *current_node = ll->head;
+    struct iterator *it = (struct iterator *)malloc_fptr(sizeof(struct iterator));
 
-    if (it == NULL || ll->head == NULL) {
+    if (it == NULL || ll == NULL || ll->head == NULL) {
         return NULL;
     }
+
+    size_t count = 0;
+    struct node *current_node = ll->head;
 
     while (count != index) {
         current_node = current_node->next;
@@ -251,6 +260,6 @@ bool linked_list_iterate(struct iterator * iter) {
     iter->current_index = new_index;
     iter->current_node = next_node;
     iter->data = next_node->data;
-    
+
     return true;
 } 
