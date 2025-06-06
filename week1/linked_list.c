@@ -7,20 +7,18 @@
 static void * (*malloc_fptr)(size_t size) = NULL;
 static void   (*free_fptr)(void* addr)    = NULL; 
 
+
 bool linked_list_register_malloc(void * (*malloc)(size_t)) {
     malloc_fptr = malloc;
     return true;
 }
 
 bool linked_list_register_free(void (*free)(void*)) {
-    free_fptr = &free;
+    free_fptr = free;
     return true;
-}
+} 
 
 struct linked_list * linked_list_create(void) {
-
-    linked_list_register_malloc(&malloc);
-    linked_list_register_free(&free);
 
     struct linked_list *ll = (struct linked_list *)malloc_fptr(sizeof(struct linked_list));
 
@@ -141,8 +139,8 @@ bool linked_list_insert(struct linked_list * ll, size_t index, unsigned int data
     size_t count = 0;
 
     while (count != index) {
-        next_node = next_node->next;
         prev_node = next_node;
+        next_node = next_node->next;
         count += 1;
     }
 
@@ -151,3 +149,108 @@ bool linked_list_insert(struct linked_list * ll, size_t index, unsigned int data
 
     return true;
 }
+
+size_t linked_list_find(struct linked_list * ll, unsigned int data) {
+
+    struct node *current_node = ll->head;
+    size_t index = 0;
+
+    if (current_node == NULL) {
+        return SIZE_MAX;
+    }
+
+    while (current_node != NULL) {
+
+        if (current_node->data == data) {
+            return index;
+        }
+
+        index += 1;
+        current_node = current_node->next;
+    }
+
+    return SIZE_MAX;
+}
+
+bool linked_list_remove(struct linked_list * ll, size_t index) {
+
+    struct node *current_node = ll->head;
+    struct node *prev_node = ll->head;
+    size_t count = 0;
+
+    if (current_node == NULL) {
+        return false;
+    }
+
+    if (index == 0) {
+        ll->head = current_node->next;
+        free_fptr(current_node);
+        return true;
+    }
+
+    while (count != index) {
+        prev_node = current_node;
+        current_node = current_node->next;
+        count += 1;
+    }
+
+    prev_node->next = current_node->next;
+    free_fptr(current_node);
+
+    return true;
+}
+
+struct iterator * linked_list_create_iterator(struct linked_list * ll, size_t index) {
+
+    struct iterator *it = malloc_fptr(sizeof(struct iterator));
+    size_t count = 0;
+    struct node *current_node = ll->head;
+
+    if (it == NULL || ll->head == NULL) {
+        return NULL;
+    }
+
+    while (count != index) {
+        current_node = current_node->next;
+        count += 1;
+    }
+
+    it->ll = ll;
+    it->current_index = count;
+    it->current_node = current_node;
+    it->data = current_node->data;
+
+    return it;
+}
+
+
+bool linked_list_delete_iterator(struct iterator * iter) {
+
+    if (iter == NULL) {
+        return false;
+    }
+
+    free_fptr(iter);
+    return true;
+}
+
+
+bool linked_list_iterate(struct iterator * iter) {
+    if (iter == NULL || iter->current_node == NULL) {
+        return false; 
+    }
+
+    struct node *next_node = iter->current_node->next;
+
+    if (next_node == NULL) {
+        return false;
+    }
+
+    size_t new_index = iter->current_index + 1;
+
+    iter->current_index = new_index;
+    iter->current_node = next_node;
+    iter->data = next_node->data;
+    
+    return true;
+} 
