@@ -128,7 +128,7 @@ bool linked_list_insert(struct linked_list * ll, size_t index, unsigned int data
 
     struct node *node_to_insert = (struct node *)malloc_fptr(sizeof(struct node));
 
-    if (node_to_insert == NULL || ll == NULL) {
+    if (node_to_insert == NULL || ll == NULL || ll->head == NULL) {
         return false;
     }
     node_to_insert->data = data;
