@@ -30,6 +30,15 @@ SOFTWARE. */
 static void * (*malloc_fptr)(size_t size) = NULL;
 static void   (*free_fptr)(void* addr)    = NULL; 
 
+// Populate all fields of an iterator to the beginning of a linked list
+static void __linked_list_populate_iterator(struct linked_list * ll, struct iterator * iter) {
+
+    iter->ll = ll;
+    iter->current_index = 0;
+    iter->current_node = ll->head;
+    iter->data = ll->head->data;
+}
+
 // Registers malloc function pointer to use function defined in linked_list_test_program.c 
 bool linked_list_register_malloc(void * (*malloc)(size_t)) {
     malloc_fptr = malloc;
@@ -183,21 +192,22 @@ size_t linked_list_find(struct linked_list * ll, unsigned int data) {
         return SIZE_MAX;
     }
 
-    struct node *current_node = ll->head;
-    size_t index = 0;
+    struct iterator iter;
+    __linked_list_populate_iterator(ll, &iter);
 
-    if (current_node == NULL) {
+    if (iter.current_node == NULL) {
         return SIZE_MAX;
     }
 
-    while (current_node != NULL) {
+    while (iter.current_node != NULL) {
 
-        if (current_node->data == data) {
-            return index;
+        if (iter.data == data) {
+            return iter.current_index;
         }
-
-        index += 1;
-        current_node = current_node->next;
+        
+        if (!linked_list_iterate(&iter)) {
+            break;
+        }
     }
 
     return SIZE_MAX;
