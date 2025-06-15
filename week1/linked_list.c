@@ -100,6 +100,7 @@ size_t linked_list_size(struct linked_list * ll) {
 }
 
 // Creates a new node to insert, and inserts at end of linked list
+// Function makes use of iterator to get to the last node on the list
 bool linked_list_insert_end(struct linked_list * ll, unsigned int data) {
 
     struct node *node_to_insert = (struct node *)malloc_fptr(sizeof(struct node));
@@ -110,7 +111,10 @@ bool linked_list_insert_end(struct linked_list * ll, unsigned int data) {
     node_to_insert->data = data;
     node_to_insert->next = NULL;
 
-    struct node *current_node = ll->head;
+    struct iterator iter;
+    __linked_list_populate_iterator(ll, &iter);
+
+    struct node *current_node = iter.current_node;
 
     if (current_node == NULL) {
         ll->head = node_to_insert;
@@ -118,8 +122,8 @@ bool linked_list_insert_end(struct linked_list * ll, unsigned int data) {
         return true;
     }
 
-    while (current_node->next != NULL) {
-        current_node = current_node->next;
+    while (linked_list_iterate(&iter)) {
+        current_node = iter.current_node;
     }
 
     current_node->next = node_to_insert;
@@ -186,6 +190,7 @@ bool linked_list_insert(struct linked_list * ll, size_t index, unsigned int data
 }
 
 // Returns index of matching node based on data field
+// Function has been modified to make use of an iterator for better performance
 size_t linked_list_find(struct linked_list * ll, unsigned int data) {
 
     if (ll == NULL) {
