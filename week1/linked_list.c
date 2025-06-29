@@ -58,6 +58,7 @@ struct linked_list * linked_list_create(void) {
 
     if (ll != NULL) {
         ll->head = NULL;
+        ll->tail = NULL;
         ll->size = 0;
     }
 
@@ -100,7 +101,6 @@ size_t linked_list_size(struct linked_list * ll) {
 }
 
 // Creates a new node to insert, and inserts at end of linked list
-// Function makes use of iterator to get to the last node on the list
 bool linked_list_insert_end(struct linked_list * ll, unsigned int data) {
 
     struct node *node_to_insert = (struct node *)malloc_fptr(sizeof(struct node));
@@ -111,24 +111,17 @@ bool linked_list_insert_end(struct linked_list * ll, unsigned int data) {
     node_to_insert->data = data;
     node_to_insert->next = NULL;
 
-    struct iterator iter;
-    __linked_list_populate_iterator(ll, &iter);
-
-    struct node *current_node = iter.current_node;
+    struct node *current_node = ll->tail;
 
     if (current_node == NULL) {
         ll->head = node_to_insert;
-        ll->size += 1;
-        return true;
+        ll->tail = node_to_insert;
+    } else {
+        current_node->next = node_to_insert;
+        ll->tail = node_to_insert;
     }
 
-    while (linked_list_iterate(&iter)) {
-        current_node = iter.current_node;
-    }
-
-    current_node->next = node_to_insert;
     ll->size += 1;
-
     return true;
 }
 
@@ -147,6 +140,7 @@ bool linked_list_insert_front(struct linked_list * ll, unsigned int data) {
 
     if (current_node == NULL) {
         ll->head = node_to_insert;
+        ll->tail = node_to_insert;
     } else {
         node_to_insert->next = current_node;
         ll->head = node_to_insert;
@@ -162,6 +156,8 @@ bool linked_list_insert(struct linked_list * ll, size_t index, unsigned int data
 
     if (index == 0) {
         return linked_list_insert_front(ll, data);
+    } else if (ll != NULL && ll->size == index) {
+        return linked_list_insert_end(ll, data);
     }
 
     struct node *node_to_insert = (struct node *)malloc_fptr(sizeof(struct node));
@@ -237,8 +233,12 @@ bool linked_list_remove(struct linked_list * ll, size_t index) {
         ll->head = current_node->next;
         free_fptr(current_node);
         ll->size -= 1;
+
+        if (ll->size == 0) {
+            ll->tail = NULL;
+        }
         return true;
-    }
+    } 
 
     while (count != index) {
         prev_node = current_node;
@@ -247,6 +247,9 @@ bool linked_list_remove(struct linked_list * ll, size_t index) {
     }
 
     prev_node->next = current_node->next;
+    if (current_node == ll->tail) {
+        ll->tail = prev_node;
+    }
     free_fptr(current_node);
     ll->size -= 1;
 
