@@ -103,9 +103,13 @@ size_t linked_list_size(struct linked_list * ll) {
 // Creates a new node to insert, and inserts at end of linked list
 bool linked_list_insert_end(struct linked_list * ll, unsigned int data) {
 
+    if (ll == NULL) {
+        return false;
+    }
+
     struct node *node_to_insert = (struct node *)malloc_fptr(sizeof(struct node));
 
-    if (node_to_insert == NULL || ll == NULL) {
+    if (node_to_insert == NULL) {
         return false;
     }
     node_to_insert->data = data;
@@ -128,11 +132,16 @@ bool linked_list_insert_end(struct linked_list * ll, unsigned int data) {
 // Creates a new node to insert, and inserts at front of linked list
 bool linked_list_insert_front(struct linked_list * ll, unsigned int data) {
 
-    struct node *node_to_insert = (struct node *)malloc_fptr(sizeof(struct node));
-
-    if (node_to_insert == NULL || ll == NULL) {
+    if (ll == NULL) {
         return false;
     }
+
+    struct node *node_to_insert = (struct node *)malloc_fptr(sizeof(struct node));
+
+    if (node_to_insert == NULL) {
+        return false;
+    }
+
     node_to_insert->data = data;
     node_to_insert->next = NULL;
 
@@ -160,9 +169,13 @@ bool linked_list_insert(struct linked_list * ll, size_t index, unsigned int data
         return linked_list_insert_end(ll, data);
     }
 
+    if (ll == NULL || ll->head == NULL) {
+        return false;
+    }
+
     struct node *node_to_insert = (struct node *)malloc_fptr(sizeof(struct node));
 
-    if (node_to_insert == NULL || ll == NULL || ll->head == NULL) {
+    if (node_to_insert == NULL) {
         return false;
     }
     node_to_insert->data = data;
@@ -259,9 +272,13 @@ bool linked_list_remove(struct linked_list * ll, size_t index) {
 // Creates an iterator over the linked list
 struct iterator * linked_list_create_iterator(struct linked_list * ll, size_t index) {
 
+    if (ll == NULL || ll->head == NULL) {
+        return NULL;
+    }
+
     struct iterator *it = (struct iterator *)malloc_fptr(sizeof(struct iterator));
 
-    if (it == NULL || ll == NULL || ll->head == NULL) {
+    if (it == NULL) {
         return NULL;
     }
 
