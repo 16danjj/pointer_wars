@@ -119,6 +119,7 @@ bool queue_next(struct queue * queue, unsigned int * popped_data) {
         return false;
     } else {
         *popped_data = it->data;
+        linked_list_delete_iterator(it);
         return true;
     }
 }
