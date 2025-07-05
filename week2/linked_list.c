@@ -29,6 +29,91 @@ SOFTWARE. */
 //
 static void * (*malloc_fptr)(size_t size) = NULL;
 static void   (*free_fptr)(void* addr)    = NULL; 
+static struct free_list f_list = {0};
+
+static struct node * __linked_list_create_node() {
+
+    if (f_list.head == NULL){
+        struct free_node *f = malloc_fptr(1000 * sizeof(struct free_node));
+        struct free_node *curr;
+
+        for (int i = 0; i<1000; i++) {
+            if (i == 0) {
+                f_list.head = &f[i];
+                curr = f_list.head;
+                continue;
+            }
+            curr->next = &f[i];
+            curr = curr->next;
+        }
+
+        f_list.size += 1000;
+        f_list.allocated += 1;
+        f_list.next_to_allocate = f_list.head->next;
+
+        f_list.head->node_ptr = (struct node*)malloc_fptr(sizeof(struct node));
+        return f_list.head->node_ptr;
+
+    } else if (f_list.allocated == f_list.size - 1) {
+        struct free_node *f = malloc_fptr(1000 * sizeof(struct free_node));
+        struct free_node *curr;
+
+        for (int i = 0; i<1000; i++) {
+            if (i == 0) {
+                f_list.next_to_allocate = &f[i];
+                curr = &f[i];
+                continue;
+            }
+
+            curr->next = &f[i];
+            curr = curr->next;
+        }
+    }
+
+    f_list.allocated += 1;
+    struct free_node *curr = f_list.next_to_allocate;
+    f_list.next_to_allocate = curr->next;
+
+    curr->node_ptr = (struct node *)malloc_fptr(sizeof(struct node));
+    return curr->node_ptr;
+}
+
+
+static void __linked_list_delete_node() {
+
+    size_t allocated = f_list.allocated;
+    size_t count = 0;
+    struct free_node *prev = f_list.head;
+    struct free_node *curr = f_list.head;
+
+    while (count < allocated) {
+        prev = curr;
+        curr = curr->next;
+        count += 1;
+    }
+
+    assert(curr == f_list.next_to_allocate);
+    f_list.allocated -= 1;
+    f_list.next_to_allocate = prev;
+}
+
+void linked_list_final_cleanup() {
+    struct free_node *curr = f_list.head;
+    struct free_node *next_node = f_list.head;
+
+    while (curr != NULL) {
+        free_fptr(curr->node_ptr);
+        next_node = next_node->next;
+        curr = next_node;
+        f_list.size -= 1;
+    }
+
+    assert(f_list.size == 0);
+    f_list.allocated = 0;
+    f_list.head = NULL;
+    f_list.next_to_allocate = NULL;
+}
+
 
 // Populate all fields of an iterator to the beginning of a linked list
 static void __linked_list_populate_iterator(struct linked_list * ll, struct iterator * iter) {
@@ -78,7 +163,7 @@ bool linked_list_delete(struct linked_list * ll) {
 
         while (current_node != NULL) {
             struct node *next_node = current_node->next;
-            free_fptr(current_node);
+            __linked_list_delete_node();
             ll->size -= 1;
 
             current_node = next_node;
@@ -107,7 +192,7 @@ bool linked_list_insert_end(struct linked_list * ll, unsigned int data) {
         return false;
     }
 
-    struct node *node_to_insert = (struct node *)malloc_fptr(sizeof(struct node));
+    struct node *node_to_insert = __linked_list_create_node();
 
     if (node_to_insert == NULL) {
         return false;
@@ -136,7 +221,7 @@ bool linked_list_insert_front(struct linked_list * ll, unsigned int data) {
         return false;
     }
 
-    struct node *node_to_insert = (struct node *)malloc_fptr(sizeof(struct node));
+    struct node *node_to_insert = __linked_list_create_node();
 
     if (node_to_insert == NULL) {
         return false;
@@ -173,7 +258,7 @@ bool linked_list_insert(struct linked_list * ll, size_t index, unsigned int data
         return false;
     }
 
-    struct node *node_to_insert = (struct node *)malloc_fptr(sizeof(struct node));
+    struct node *node_to_insert = __linked_list_create_node();
 
     if (node_to_insert == NULL) {
         return false;
@@ -244,7 +329,7 @@ bool linked_list_remove(struct linked_list * ll, size_t index) {
 
     if (index == 0) {
         ll->head = current_node->next;
-        free_fptr(current_node);
+        __linked_list_delete_node();
         ll->size -= 1;
 
         if (ll->size == 0) {
@@ -263,7 +348,7 @@ bool linked_list_remove(struct linked_list * ll, size_t index) {
     if (current_node == ll->tail) {
         ll->tail = prev_node;
     }
-    free_fptr(current_node);
+    __linked_list_delete_node();
     ll->size -= 1;
 
     return true;

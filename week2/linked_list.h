@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <assert.h>
 
 // Some rules for Pointer Wars 2025:
 // 0. Implement all functions in linked_list.c
@@ -32,6 +33,20 @@ struct linked_list {
 struct node {
     struct node * next;
     unsigned int data;
+};
+
+// A node in the free_list structure
+struct free_node {
+    struct node * node_ptr;
+    struct free_node * next;
+};
+
+// Declaration of the free_list structure
+struct free_list {
+    struct free_node * head;
+    struct free_node *next_to_allocate;
+    size_t allocated;
+    size_t size;
 };
 
 // Very simple, not thread safe, iterator.
@@ -138,5 +153,8 @@ bool linked_list_register_malloc(void * (*malloc)(size_t));
 // Returns TRUE on success, FALSE otherwise.
 //
 bool linked_list_register_free(void (*free)(void*));
+
+// Deallocate all free_node pointers from the free_list
+void linked_list_final_cleanup(void);
 
 #endif
