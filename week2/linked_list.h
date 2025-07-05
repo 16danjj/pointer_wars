@@ -44,7 +44,7 @@ struct free_node {
 // Declaration of the free_list structure
 struct free_list {
     struct free_node * head;
-    struct free_node *next_to_allocate;
+    struct free_node * removed;
     size_t allocated;
     size_t size;
 };
