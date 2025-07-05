@@ -32,7 +32,6 @@ static void   (*free_fptr)(void* addr)    = NULL;
 static struct free_list f_list = {.head = NULL, .size = 0, .allocated = 0, .next_to_allocate = NULL};
 
 static struct node * __linked_list_create_node() {
-
     if (f_list.head == NULL){
         struct free_node *f = malloc_fptr(1000 * sizeof(struct free_node));
         struct free_node *curr = NULL;
@@ -41,32 +40,42 @@ static struct node * __linked_list_create_node() {
             if (i == 0) {
                 f_list.head = &f[i];
                 curr = f_list.head;
+                curr->node_ptr = NULL;
                 continue;
             }
+
             curr->next = &f[i];
             curr = curr->next;
+            curr->node_ptr = NULL;
         }
 
         f_list.size += 1000;
         f_list.allocated += 1;
         f_list.next_to_allocate = f_list.head->next;
 
-        f_list.head->node_ptr = (struct node*)malloc_fptr(sizeof(struct node));
+        if (f_list.head->node_ptr == NULL) {
+            f_list.head->node_ptr = (struct node*)malloc_fptr(sizeof(struct node));
+        }
+        
         return f_list.head->node_ptr;
 
-    } else if (f_list.allocated == f_list.size - 1) {
+    } else if (f_list.allocated == f_list.size) {
+
         struct free_node *f = malloc_fptr(1000 * sizeof(struct free_node));
+        f_list.size += 1000;
         struct free_node *curr = NULL;
 
         for (int i = 0; i<1000; i++) {
             if (i == 0) {
                 f_list.next_to_allocate = &f[i];
                 curr = &f[i];
+                curr->node_ptr = NULL;
                 continue;
             }
 
             curr->next = &f[i];
             curr = curr->next;
+            curr->node_ptr = NULL;
         }
     }
 
@@ -74,10 +83,12 @@ static struct node * __linked_list_create_node() {
     struct free_node *curr = f_list.next_to_allocate;
     f_list.next_to_allocate = curr->next;
 
-    curr->node_ptr = (struct node *)malloc_fptr(sizeof(struct node));
+    if (curr->node_ptr == NULL) {
+        curr->node_ptr = (struct node *)malloc_fptr(sizeof(struct node));
+    }
+
     return curr->node_ptr;
 }
-
 
 static void __linked_list_delete_node() {
 
@@ -116,7 +127,6 @@ void linked_list_final_cleanup() {
     f_list.head = NULL;
     f_list.next_to_allocate = NULL;
 }
-
 
 // Populate all fields of an iterator to the beginning of a linked list
 static void __linked_list_populate_iterator(struct linked_list * ll, struct iterator * iter) {
