@@ -29,13 +29,13 @@ SOFTWARE. */
 //
 static void * (*malloc_fptr)(size_t size) = NULL;
 static void   (*free_fptr)(void* addr)    = NULL; 
-static struct free_list f_list = {0};
+static struct free_list f_list = {.head = NULL, .size = 0, .allocated = 0, .next_to_allocate = NULL};
 
 static struct node * __linked_list_create_node() {
 
     if (f_list.head == NULL){
         struct free_node *f = malloc_fptr(1000 * sizeof(struct free_node));
-        struct free_node *curr;
+        struct free_node *curr = NULL;
 
         for (int i = 0; i<1000; i++) {
             if (i == 0) {
@@ -56,7 +56,7 @@ static struct node * __linked_list_create_node() {
 
     } else if (f_list.allocated == f_list.size - 1) {
         struct free_node *f = malloc_fptr(1000 * sizeof(struct free_node));
-        struct free_node *curr;
+        struct free_node *curr = NULL;
 
         for (int i = 0; i<1000; i++) {
             if (i == 0) {
@@ -109,6 +109,9 @@ void linked_list_final_cleanup() {
     }
 
     assert(f_list.size == 0);
+
+    curr = f_list.head;
+    free_fptr(curr);
     f_list.allocated = 0;
     f_list.head = NULL;
     f_list.next_to_allocate = NULL;
