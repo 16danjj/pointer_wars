@@ -51,7 +51,7 @@ struct free_list {
     size_t size;
 };
 
-// Node to keep track of the starting node when malloc for bulk allocation
+// Node to keep track of the starting free_node when malloc'ed for bulk allocation
 struct control_node {
     struct free_node *f;
     struct control_node *next;
