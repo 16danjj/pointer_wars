@@ -104,14 +104,12 @@ bool queue_has_next(struct queue * queue) {
     return true;
 }
 
-// Pushes an unsigned int onto the queue.
+// Checks whether queue has an item to be popped, and passes the value of the item to the pointer function parameter
 bool queue_next(struct queue * queue, unsigned int * popped_data) {
 
     if (!queue_has_next(queue)){
         return false;
     }
-
-    //size_t index = queue_size(queue);
 
     struct iterator *it = linked_list_create_iterator(queue->ll, 0);
 
