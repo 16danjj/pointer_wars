@@ -6,6 +6,8 @@
 #include <stdint.h>
 #include <assert.h>
 
+#define NUMBER_OF_NODES_TO_ALLOC 1000
+
 // Some rules for Pointer Wars 2025:
 // 0. Implement all functions in linked_list.c
 // 1. Feel free to add members to the structures, but please do not remove 
@@ -47,6 +49,17 @@ struct free_list {
     struct free_node * removed;
     size_t allocated;
     size_t size;
+};
+
+// Node to keep track of the starting node when malloc for bulk allocation
+struct control_node {
+    struct free_node *f;
+    struct control_node *next;
+};
+
+// A list to store all control nodes
+struct control_list {
+    struct control_node *head;
 };
 
 // Very simple, not thread safe, iterator.

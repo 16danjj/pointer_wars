@@ -30,14 +30,20 @@ SOFTWARE. */
 static void * (*malloc_fptr)(size_t size) = NULL;
 static void   (*free_fptr)(void* addr)    = NULL; 
 static struct free_list f_list = {.head = NULL, .size = 0, .allocated = 0, .removed = NULL};
+static struct control_list c_list = {.head = NULL};
 
 // Returns a struct node pointer from a free list of pointers
 static struct node * __linked_list_create_node() {
     if (f_list.head == NULL){
-        struct free_node *f = malloc_fptr(1000 * sizeof(struct free_node));
+        struct free_node *f = (struct free_node *)malloc_fptr(NUMBER_OF_NODES_TO_ALLOC * sizeof(struct free_node));
+        struct control_node *c = (struct control_node *)malloc_fptr(sizeof(struct control_node));
+        c->f = f;
+        c->next = NULL;
+        c_list.head = c;
+
         struct free_node *curr = NULL;
 
-        for (int i = 0; i<1000; i++) {
+        for (int i = 0; i<NUMBER_OF_NODES_TO_ALLOC; i++) {
             if (i == 0) {
                 f_list.head = &f[i];
                 curr = f_list.head;
@@ -50,7 +56,7 @@ static struct node * __linked_list_create_node() {
             curr->node_ptr = NULL;
         }
 
-        f_list.size += 1000;
+        f_list.size += NUMBER_OF_NODES_TO_ALLOC;
         f_list.allocated += 1;
         struct free_node *next_node = f_list.head->next;
         struct free_node *to_return = f_list.head;
@@ -67,10 +73,16 @@ static struct node * __linked_list_create_node() {
 
     } else if (f_list.allocated == f_list.size) {
 
-        struct free_node *f = malloc_fptr(1000 * sizeof(struct free_node));
-        f_list.size += 1000;
+        struct free_node *f = (struct free_node *)malloc_fptr(NUMBER_OF_NODES_TO_ALLOC * sizeof(struct free_node));
+        f_list.size += NUMBER_OF_NODES_TO_ALLOC;
 
-        for (int i = 0; i<1000; i++) {
+        struct control_node *c = (struct control_node *)malloc_fptr(sizeof(struct control_node));
+        struct control_node *curr_head = c_list.head;
+        c->f = f;
+        c->next = curr_head;
+        c_list.head = c;
+
+        for (int i = 0; i<NUMBER_OF_NODES_TO_ALLOC; i++) {
             
             struct free_node *new_head = &f[i];
             new_head->next = f_list.head;
@@ -116,7 +128,7 @@ static void __linked_list_delete_node(struct node *ptr) {
     f_list.allocated -= 1;
 } 
 
-// Free all heap allocated pointers at the end
+// Free all heap allocated pointers at the end 
 void linked_list_final_cleanup() {
     struct free_node *curr = f_list.head;
     struct free_node *next_node = f_list.head;
@@ -130,8 +142,17 @@ void linked_list_final_cleanup() {
 
     assert(f_list.size == 0);
 
-    curr = f_list.head;
-    free_fptr(curr);
+    struct control_node *curr_control_node = c_list.head;
+    struct control_node *next_control_node = c_list.head;
+
+    while (curr_control_node != NULL) {
+        next_control_node = curr_control_node->next;
+        free_fptr(curr_control_node->f);
+        free_fptr(curr_control_node);
+        curr_control_node = next_control_node;
+    }
+
+    c_list.head = NULL;
     f_list.allocated = 0;
     f_list.head = NULL;
 }
