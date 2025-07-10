@@ -35,12 +35,14 @@ static void (*free_fptr)(void* addr) = NULL;
 
 // Registers malloc function pointer to use function defined in linked_list_test_program.c
 bool queue_register_malloc(void * (*malloc)(size_t)) {
+    linked_list_register_malloc(malloc);
     malloc_fptr = malloc;
     return true;
 }
 
 // Registers free function pointer to use function defined in linked_list_test_program.c 
 bool queue_register_free(void (*free)(void*)) {
+    linked_list_register_free(free);
     free_fptr = free;
     return true;
 } 
@@ -49,8 +51,6 @@ bool queue_register_free(void (*free)(void*)) {
 struct queue * queue_create(void) {
 
     struct queue *q = (struct queue *)malloc_fptr(sizeof(struct queue));
-    linked_list_register_malloc(&malloc);
-    linked_list_register_free(&free);
 
     if (q != NULL) {
         q->ll = linked_list_create();

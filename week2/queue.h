@@ -26,7 +26,7 @@ SOFTWARE. */
 #define _QUEUE_H
 
 #include "linked_list.h"
-#include <stdlib.h>
+
 // Some rules for Pointer Wars 2025 week 2:
 // 0. Implement all functions in queue.c
 // 1. Feel free to add members to the structures, but please do not remove 
